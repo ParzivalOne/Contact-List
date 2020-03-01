@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:contact_list/helpers/contact_helper.dart';
+import 'package:contact_list/ui/contact_page.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,12 +16,11 @@ class _HomePageState extends State<HomePage> {
 
 
   @override
-  void initState() {
+  void initState(){
     super.initState();
 
-    helper.getAllContacts().then((list){
-      contacts = list;
-    });
+    _getAllContacts();
+
   }
 
   @override
@@ -33,7 +33,9 @@ class _HomePageState extends State<HomePage> {
       ),
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
-        onPressed: (){},
+        onPressed: (){
+          _showContactPage();
+        },
         child: Icon(Icons.add),
         backgroundColor: Colors.red,
       ),
@@ -92,7 +94,101 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+      onTap: (){
+        _showOptions(context, index);
+        //_showContactPage(contact: contacts[index]);
+      },
     );
+  }
+
+  void _showOptions(BuildContext context, int index){
+    showModalBottomSheet(
+        context: context,
+        builder: (context){
+          return BottomSheet(
+            builder: (context){
+              return Container(
+                padding: EdgeInsets.all(10.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Padding(
+                      padding: EdgeInsets.all(2.0),
+                      child: FlatButton(
+                          onPressed: (){
+
+                          },
+                          child: Text("Ligar",
+                            style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 20.0
+                            ),
+                          )
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(2.0),
+                      child: FlatButton(
+                          onPressed: (){
+                            Navigator.pop(context);
+                            _showContactPage(contact: contacts[index]);
+                          },
+                          child: Text("Editar",
+                            style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 20.0
+                            ),
+                          )
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(2.0),
+                      child: FlatButton(
+                          onPressed: (){
+                            helper.deleteContact(contacts[index].id);
+                            setState(() {
+                              contacts.removeAt(index);
+                              Navigator.pop(context);
+                            });
+                          },
+                          child: Text("Excluir",
+                            style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 20.0
+                            ),
+                          )
+                      ),
+                    )
+                  ],
+                ),
+              );
+            },
+            onClosing: (){},
+          );
+        });
+  }
+
+  Future<void> _showContactPage({Contact contact}) async {
+    final recContact = await Navigator.push(context,
+        MaterialPageRoute(builder: (context) => ContactPage(contact: contact,)));
+    if(recContact != null){
+      if(contact != null){
+        await helper.updateContact(recContact);
+        _getAllContacts();
+      }else{
+        await helper.saveContact(recContact);
+      }
+      _getAllContacts();
+    }
+  }
+
+  void _getAllContacts(){
+    helper.getAllContacts().then((list){
+      setState(() {
+        contacts = list;
+      });
+
+    });
   }
 
 }
